@@ -169,11 +169,14 @@ void smt2_convt::write_footer(std::ostream &os)
   if(!assumptions.empty())
   {
     os << "; assumptions\n";
-
     for(const auto &assumption : assumptions)
     {
       os << "(assert ";
-      convert_literal(to_literal_expr(assumption).get_literal());
+      /* convert_literal(to_literal_expr(assumption).get_literal()); */
+      auto l = to_literal_expr(assumption).get_literal();
+      if(l.sign()) os << "(not ";
+      os << "|B" << l.var_no() << "|";
+      if(l.sign()) os << ")";
       os << ")"
          << "\n";
     }
@@ -1643,6 +1646,14 @@ void smt2_convt::convert_expr(const exprt &expr)
       }
       else
         convert_floatbv(abs_expr);
+    }
+    else if(type.id()==ID_integer ||
+            type.id()==ID_rational ||
+            type.id()==ID_real)
+    {
+      out << "(abs ";
+      convert_expr(abs_expr.op());
+      out << ")";
     }
     else
       UNREACHABLE;
@@ -3368,7 +3379,7 @@ void smt2_convt::convert_floatbv_plus(const ieee_float_op_exprt &expr)
 
 void smt2_convt::convert_minus(const minus_exprt &expr)
 {
-  if(expr.type().id()==ID_integer)
+  if(expr.type().id()==ID_integer || expr.type().id()==ID_real)
   {
     out << "(- ";
     convert_expr(expr.op0());
