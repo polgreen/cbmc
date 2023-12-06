@@ -1910,6 +1910,12 @@ void smt2_convt::convert_expr(const exprt &expr)
       else
         convert_floatbv(abs_expr);
     }
+    else if(type.id()==ID_integer)
+    {
+        out << "(abs ";
+        convert_expr(abs_expr.op());
+        out << ")";
+    }
     else
       UNREACHABLE;
   }
@@ -3941,6 +3947,14 @@ void smt2_convt::convert_div(const div_exprt &expr)
     // to ID_floatbv_div during symbolic execution, adding
     // the rounding mode.  See smt2_convt::convert_floatbv_div.
     UNREACHABLE;
+  }
+  else if(expr.type().id()==ID_integer)
+  {
+    out <<"(/ ";
+    convert_expr(expr.op0());
+    out << " ";
+    convert_expr(expr.op1());
+    out << ")";
   }
   else
     UNEXPECTEDCASE("unsupported type for /: "+expr.type().id_string());
