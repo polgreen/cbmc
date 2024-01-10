@@ -131,6 +131,17 @@ exprt::operandst smt2_parsert::operands()
   return result;
 }
 
+void smt2_parsert::increase_count(irep_idt id)
+{
+
+  if(operator_counts.find(id)==operator_counts.end())
+  {
+    operator_counts[id] = 0;
+  }
+
+  operator_counts[id]++;
+}
+
 void smt2_parsert::add_unique_id(irep_idt id, exprt expr)
 {
   if(!id_map
@@ -583,6 +594,7 @@ exprt smt2_parsert::function_application()
     {
       // non-indexed symbol, look up in expression table
       const auto id = smt2_tokenizer.get_buffer();
+      increase_count(id);
       const auto e_it = expressions.find(id);
       if(e_it != expressions.end())
         return e_it->second();

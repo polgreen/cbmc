@@ -57,6 +57,9 @@ public:
   using id_mapt=std::map<irep_idt, idt>;
   id_mapt id_map;
 
+  std::map<irep_idt, unsigned> operator_counts;
+  void increase_count(irep_idt id);
+
   struct named_termt
   {
     /// Default-constructing a symbol_exprt is deprecated, thus make sure we
