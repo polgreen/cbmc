@@ -1250,6 +1250,7 @@ void smt2_parsert::setup_expressions()
 
   expressions["ite"] = [this] {
     auto op = operands();
+    increase_count("ite");
 
     if(op.size() != 3)
       throw error("ite takes three operands");
