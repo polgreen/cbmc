@@ -21,7 +21,7 @@ class smt2_parsert
 {
 public:
   explicit smt2_parsert(std::istream &_in)
-    : exit(false), smt2_tokenizer(_in), parenthesis_level(0)
+    : parse_generously(false), exit(false), smt2_tokenizer(_in), parenthesis_level(0)
   {
     setup_commands();
     setup_sorts();
@@ -75,7 +75,7 @@ public:
 
   using named_termst = std::map<irep_idt, named_termt>;
   named_termst named_terms;
-
+  bool parse_generously;
   bool exit;
 
   smt2_tokenizert::smt2_errort error(const std::string &message) const
@@ -91,11 +91,13 @@ public:
   /// This skips tokens until all bracketed expressions are closed
   void skip_to_end_of_list();
 
+
 protected:
   smt2_tokenizert smt2_tokenizer;
   // we extend next_token to track the parenthesis level
   std::size_t parenthesis_level;
   smt2_tokenizert::tokent next_token();
+  void skip_to_next_open_parenthesis();
 
   // add the given identifier to the id_map but
   // complain if that identifier is used already

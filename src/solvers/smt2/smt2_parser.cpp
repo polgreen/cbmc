@@ -41,6 +41,20 @@ void smt2_parsert::skip_to_end_of_list()
       return;
 }
 
+void smt2_parsert::skip_to_next_open_parenthesis()
+{
+  while(true)
+  {
+    if(smt2_tokenizer.peek() == smt2_tokenizert::END_OF_FILE)
+    {
+      exit=true;
+      return;
+    }
+    else if(smt2_tokenizer.next_token()==smt2_tokenizert::OPEN)
+      return;
+  }
+}
+
 void smt2_parsert::command_sequence()
 {
   exit=false;
@@ -54,7 +68,12 @@ void smt2_parsert::command_sequence()
     }
 
     if(next_token() != smt2_tokenizert::OPEN)
-      throw error("command must start with '('");
+    {
+      if(parse_generously)
+        skip_to_next_open_parenthesis();
+      else
+        throw error("command must start with '('");
+    }
 
     if(next_token() != smt2_tokenizert::SYMBOL)
     {
@@ -152,7 +171,17 @@ void smt2_parsert::add_unique_id(irep_idt id, exprt expr)
         .second)
   {
     // id already used
-    throw error() << "identifier '" << id << "' defined twice";
+    if(parse_generously)
+    {
+      irep_idt new_id = id2string(id) + std::to_string(id_map.size());
+      id_map.emplace(
+        std::piecewise_construct,
+        std::forward_as_tuple(new_id),
+        std::forward_as_tuple(idt::VARIABLE, expr));
+
+    }
+    else
+      throw error() << "identifier '" << id << "' defined twice";
   }
 }
 
