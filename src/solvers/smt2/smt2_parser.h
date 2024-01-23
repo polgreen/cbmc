@@ -171,10 +171,15 @@ protected:
   typet function_signature_declaration();
   signature_with_parameter_idst function_signature_definition();
   void check_matching_operand_types(const exprt::operandst &) const;
-  exprt multi_ary(irep_idt, const exprt::operandst &);
-  exprt binary_predicate(irep_idt, const exprt::operandst &);
-  exprt binary(irep_idt, const exprt::operandst &);
-  exprt unary(irep_idt, const exprt::operandst &);
+  void check_operands_are_bools(const exprt::operandst &) const;
+  void check_operands_are_not_bools(const exprt::operandst &) const;
+  exprt multi_ary(irep_idt, const exprt::operandst &, bool );
+  exprt only_bool_multi_ary(irep_idt, const exprt::operandst & );
+  exprt binary_predicate(irep_idt, const exprt::operandst &, bool );
+  exprt binary(irep_idt, const exprt::operandst &, bool );
+  exprt only_bool_binary(irep_idt, const exprt::operandst & );
+  exprt unary(irep_idt, const exprt::operandst &, bool);
+  exprt only_bool_unary(irep_idt, const exprt::operandst & );
   exprt bv_division(const exprt::operandst &, bool is_signed);
   exprt bv_mod(const exprt::operandst &, bool is_signed);
 

@@ -400,45 +400,121 @@ void smt2_parsert::check_matching_operand_types(
   }
 }
 
-exprt smt2_parsert::multi_ary(irep_idt id, const exprt::operandst &op)
-{
-  if(op.empty())
-    throw error("expression must have at least one operand");
 
-  check_matching_operand_types(op);
+void smt2_parsert::check_operands_are_bools(
+  const exprt::operandst &op) const
+{
+  for(std::size_t i = 1; i < op.size(); i++)
+  {
+    if(op[i].type().id() != ID_bool)
+    {
+      throw error() << "expression must have operands that are bools,"
+                       " but got '"
+                    << smt2_format(op[i].type());
+    }
+  }
+}
+
+void smt2_parsert::check_operands_are_not_bools(
+  const exprt::operandst &op) const
+{
+  for(std::size_t i = 1; i < op.size(); i++)
+  {
+    if(op[i].type().id() == ID_bool)
+    {
+      throw error() << "expression must have operands that are not bools,"
+                       " but got '"
+                    << smt2_format(op[i].type());
+    }
+  }
+}
+
+
+exprt smt2_parsert::only_bool_multi_ary(irep_idt id, const exprt::operandst &op)
+{
+  if(op.size()<2)
+    throw error("expression must have at least 2 operands");
+
+  check_operands_are_bools(op);
 
   exprt result(id, op[0].type());
   result.operands() = op;
   return result;
 }
 
-exprt smt2_parsert::binary_predicate(irep_idt id, const exprt::operandst &op)
+
+exprt smt2_parsert::multi_ary(irep_idt id, const exprt::operandst &op, bool permit_bool_ops=false)
+{
+  if(op.size()<2)
+    throw error("expression must have at least 2 operands");
+
+  if(!permit_bool_ops)
+    check_operands_are_not_bools(op);
+  else
+    check_matching_operand_types(op);
+
+  exprt result(id, op[0].type());
+  result.operands() = op;
+  return result;
+}
+
+exprt smt2_parsert::binary_predicate(irep_idt id, const exprt::operandst &op, bool permit_bool_ops=false)
 {
   if(op.size()!=2)
     throw error("expression must have two operands");
 
-  check_matching_operand_types(op);
+  if(!permit_bool_ops)
+    check_operands_are_not_bools(op);
+  else
+    check_matching_operand_types(op);
 
   return binary_predicate_exprt(op[0], id, op[1]);
 }
 
-exprt smt2_parsert::unary(irep_idt id, const exprt::operandst &op)
+exprt smt2_parsert::unary(irep_idt id, const exprt::operandst &op, bool permit_bool_ops=false)
 {
   if(op.size()!=1)
     throw error("expression must have one operand");
+  
+  if(!permit_bool_ops)
+    check_operands_are_not_bools(op);
 
   return unary_exprt(id, op[0], op[0].type());
 }
 
-exprt smt2_parsert::binary(irep_idt id, const exprt::operandst &op)
+exprt smt2_parsert::only_bool_unary(irep_idt id, const exprt::operandst &op)
+{
+  if(op.size()!=1)
+    throw error("expression must have one operand");
+  
+  check_operands_are_bools(op);
+
+  return unary_exprt(id, op[0], op[0].type());
+}
+
+exprt smt2_parsert::binary(irep_idt id, const exprt::operandst &op, bool permit_bool_ops=false)
 {
   if(op.size()!=2)
     throw error("expression must have two operands");
 
-  check_matching_operand_types(op);
+  if(!permit_bool_ops)
+    check_operands_are_not_bools(op);
+  else
+    check_matching_operand_types(op);
 
   return binary_exprt(op[0], id, op[1], op[0].type());
 }
+
+exprt smt2_parsert::only_bool_binary(irep_idt id, const exprt::operandst &op)
+{
+  if(op.size()!=2)
+    throw error("expression must have two operands");
+
+  check_operands_are_bools(op);
+
+  return binary_exprt(op[0], id, op[1], op[0].type());
+}
+
 
 exprt smt2_parsert::function_application_ieee_float_eq(
   const exprt::operandst &op)
@@ -1153,11 +1229,11 @@ void smt2_parsert::setup_expressions()
   expressions["let"] = [this] { return let_expression(); };
   expressions["exists"] = [this] { return quantifier_expression(ID_exists); };
   expressions["forall"] = [this] { return quantifier_expression(ID_forall); };
-  expressions["and"] = [this] { return multi_ary(ID_and, operands()); };
-  expressions["or"] = [this] { return multi_ary(ID_or, operands()); };
-  expressions["xor"] = [this] { return multi_ary(ID_xor, operands()); };
-  expressions["not"] = [this] { return unary(ID_not, operands()); };
-  expressions["="] = [this] { return binary_predicate(ID_equal, operands()); };
+  expressions["and"] = [this] { return only_bool_multi_ary(ID_and, operands()); };
+  expressions["or"] = [this] { return only_bool_multi_ary(ID_or, operands()); };
+  expressions["xor"] = [this] { return only_bool_multi_ary(ID_xor, operands()); };
+  expressions["not"] = [this] { return only_bool_unary(ID_not, operands()); };
+  expressions["="] = [this] { return binary_predicate(ID_equal, operands(), true); };
   expressions["<="] = [this] { return binary_predicate(ID_le, operands()); };
   expressions[">="] = [this] { return binary_predicate(ID_ge, operands()); };
   expressions["<"] = [this] { return binary_predicate(ID_lt, operands()); };
@@ -1260,7 +1336,7 @@ void smt2_parsert::setup_expressions()
     // pair-wise different constraint, multi-ary
     auto op = operands();
     if(op.size() == 2)
-      return binary_predicate(ID_notequal, op);
+      return binary_predicate(ID_notequal, op, true);
     else
     {
       std::vector<exprt> pairwise_constraints;
@@ -1273,7 +1349,7 @@ void smt2_parsert::setup_expressions()
               binary_exprt(op[i], ID_notequal, op[j], bool_typet()));
         }
       }
-      return multi_ary(ID_and, pairwise_constraints);
+      return multi_ary(ID_and, pairwise_constraints,true);
     }
   };
 
@@ -1293,9 +1369,9 @@ void smt2_parsert::setup_expressions()
     return if_exprt(op[0], op[1], op[2]);
   };
 
-  expressions["implies"] = [this] { return binary(ID_implies, operands()); };
+  expressions["implies"] = [this] { return only_bool_binary(ID_implies, operands()); };
 
-  expressions["=>"] = [this] { return binary(ID_implies, operands()); };
+  expressions["=>"] = [this] { return only_bool_binary(ID_implies, operands()); };
 
   expressions["select"] = [this] {
     auto op = operands();
