@@ -303,7 +303,16 @@ void smt2_tokenizert::get_token_from_stream()
       else
       {
         // illegal character, error
+        if(parse_generously)
+        {
+          buffer.clear();
+          buffer+=ch;
+          token = SYMBOL;
+          return;
+        }
+        else
         throw error() << "unexpected character '" << ch << '\'';
+
       }
     }
   }

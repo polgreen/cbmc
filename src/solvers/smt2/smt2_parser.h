@@ -75,6 +75,13 @@ public:
 
   using named_termst = std::map<irep_idt, named_termt>;
   named_termst named_terms;
+
+  void set_parse_generously(bool _parse_generously)
+  {
+    parse_generously=_parse_generously;
+    smt2_tokenizer.set_parse_generously(_parse_generously);
+  }
+
   bool parse_generously;
   bool exit;
 

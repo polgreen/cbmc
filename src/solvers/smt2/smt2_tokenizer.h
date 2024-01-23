@@ -15,7 +15,7 @@ Author: Daniel Kroening, kroening@kroening.com
 class smt2_tokenizert
 {
 public:
-  explicit smt2_tokenizert(std::istream &_in) : peeked(false), token(NONE)
+  explicit smt2_tokenizert(std::istream &_in) : peeked(false), token(NONE), parse_generously(false)
   {
     in=&_in;
     line_no=1;
@@ -101,6 +101,11 @@ public:
     return smt2_errort(line_no);
   }
 
+  void set_parse_generously(bool value)
+  {
+    parse_generously = value;
+  }
+
 protected:
   std::istream *in;
   unsigned line_no;
@@ -108,6 +113,7 @@ protected:
   bool quoted_symbol = false;
   bool peeked;
   tokent token;
+  bool parse_generously;
 
   /// skip any tokens until all parentheses are closed
   /// or the end of file is reached
