@@ -40,6 +40,10 @@ static void build_object_descriptor_rec(
     build_object_descriptor_rec(ns, index.array(), dest);
 
     auto sub_size = size_of_expr(expr.type(), ns);
+    if(!sub_size.has_value())
+    {
+      std::cout<<"no value for "<< id2string(expr.type().id())<<std::endl;
+    }
     CHECK_RETURN(sub_size.has_value());
 
     if(sub_size.has_value())
