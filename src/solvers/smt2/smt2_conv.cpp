@@ -3167,6 +3167,18 @@ void smt2_convt::convert_typecast(const typecast_exprt &expr)
       convert_typecast(tmp);
     }
   }
+  else if(dest_type.id()==ID_rational)
+  {
+    if(src_type.id()==ID_signedbv)
+    {
+      // TODO: negative numbers
+      out << "(/ ";
+      convert_expr(src);
+      out << " 1)";
+    }
+    else
+      UNEXPECTEDCASE("Unknown typecast "+src_type.id_string()+" -> rational");
+    }
   else
     UNEXPECTEDCASE(
       "TODO typecast8 "+src_type.id_string()+" -> "+dest_type.id_string());

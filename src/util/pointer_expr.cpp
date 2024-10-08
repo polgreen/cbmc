@@ -26,6 +26,7 @@ unsigned int dynamic_object_exprt::get_instance() const
   return std::stoul(id2string(to_constant_expr(op0()).get_value()));
 }
 
+#include <iostream>
 /// Build an object_descriptor_exprt from a given expr
 static void build_object_descriptor_rec(
   const namespacet &ns,
@@ -39,6 +40,7 @@ static void build_object_descriptor_rec(
     build_object_descriptor_rec(ns, index.array(), dest);
 
     auto sub_size = size_of_expr(expr.type(), ns);
+    CHECK_RETURN(sub_size.has_value());
 
     if(sub_size.has_value())
     {
