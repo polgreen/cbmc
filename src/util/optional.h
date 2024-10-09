@@ -11,8 +11,8 @@ Author: Diffblue Ltd.
 #define CPROVER_UTIL_OPTIONAL_H
 
 #if defined __clang__
-  #pragma clang diagnostic push ignore "-Wall"
-  #pragma clang diagnostic push ignore "-Wpedantic"
+  // #pragma clang diagnostic push ignore "-Wall"
+  // #pragma clang diagnostic push ignore "-Wpedantic"
 #elif defined __GNUC__
   #pragma GCC diagnostic push ignore "-Wall"
   #pragma GCC diagnostic push ignore "-Wpedantic"
@@ -21,8 +21,8 @@ Author: Diffblue Ltd.
 #endif
 #include <nonstd/optional.hpp>
 #if defined  __clang__
-  #pragma clang diagnostic pop
-  #pragma clang diagnostic pop
+  // #pragma clang diagnostic pop
+  // #pragma clang diagnostic pop
 #elif defined  __GNUC__
   #pragma GCC diagnostic pop
   #pragma GCC diagnostic pop
