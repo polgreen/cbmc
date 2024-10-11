@@ -24,6 +24,8 @@ Author: Daniel Kroening, kroening@kroening.com
 #include <util/ieee_float.h>
 #include <util/invariant.h>
 #include <util/mathematical_expr.h>
+#include <util/rational.h>
+#include <util/rational_tools.h>
 #include <util/namespace.h>
 #include <util/pointer_offset_size.h>
 #include <util/pointer_predicates.h>
@@ -417,7 +419,6 @@ constant_exprt smt2_convt::parse_literal(
   if(!src.id().empty())
   {
     const std::string &s=src.id_string();
-
     if(s.size()>=2 && s[0]=='#' && s[1]=='b')
     {
       // Binary #b010101
@@ -430,8 +431,29 @@ constant_exprt smt2_convt::parse_literal(
     }
     else
     {
+      std::size_t pos = s.find(".");
+      if(pos != std::string::npos)
+      {
+        // Decimal, return as rational
+        mp_integer first = string2integer(s.substr(0, pos));
+        mp_integer second = string2integer(s.substr(pos, std::string::npos));
+        if(type.id() == ID_rational)
+        {
+          rationalt rational_value(first);
+          rationalt second_rational(second);
+          rationalt tmp = rational_value + second_rational / rationalt(100);
+          return from_rational(tmp);
+        }
+        else
+        {
+          UNREACHABLE_BECAUSE(
+            "smt2_convt::parse_literal parsed a number with a decimal point "
+            "in, which cannot be converted to type " +
+            type.id_string());
+        }
+      }
       // Numeral
-      value=string2integer(s);
+      value = string2integer(s);
     }
   }
   else if(src.get_sub().size()==2 &&
@@ -526,6 +548,11 @@ constant_exprt smt2_convt::parse_literal(
   else if(type.id() == ID_range)
   {
     return from_integer(value + to_range_type(type).get_from(), type);
+  }
+  else if (type.id()==ID_rational)
+  {
+     // TODO parse this literal back correctly.
+    return from_integer(value, type);
   }
   else
     UNREACHABLE_BECAUSE(
@@ -4201,6 +4228,16 @@ void smt2_convt::convert_div(const div_exprt &expr)
     // to ID_floatbv_div during symbolic execution, adding
     // the rounding mode.  See smt2_convt::convert_floatbv_div.
     UNREACHABLE;
+  }
+  else if (expr.type().id()==ID_rational ||
+           expr.type().id()==ID_integer ||
+           expr.type().id()==ID_real)
+  {
+    out << "(/ ";
+    convert_expr(expr.op0());
+    out << " ";
+    convert_expr(expr.op1());
+    out << ")";
   }
   else
     UNEXPECTEDCASE("unsupported type for /: "+expr.type().id_string());
