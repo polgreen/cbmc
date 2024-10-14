@@ -3627,7 +3627,10 @@ void smt2_convt::convert_constant(const constant_exprt &expr)
     const bool negative = has_prefix(value, "-");
 
     if(negative)
+    {
       out << "(- ";
+      value=value.substr(1);
+    }
 
     size_t pos=value.find("/");
 

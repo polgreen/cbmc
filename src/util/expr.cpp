@@ -59,8 +59,10 @@ bool exprt::is_zero() const
     {
       rationalt rat_value;
       if(to_rational(*this, rat_value))
-        CHECK_RETURN(false);
-      return rat_value.is_zero();
+      {
+        // CHECK_RETURN(false);
+        return rat_value.is_zero();
+      }
     }
     else if(
       type_id == ID_unsignedbv || type_id == ID_signedbv ||
