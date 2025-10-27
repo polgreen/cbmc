@@ -133,6 +133,11 @@ protected:
     const std::string &symbol2,
     unsigned precedence);
 
+  
+  std::string convert_ite(
+    const ternary_exprt &src,
+    unsigned precedence);
+
   /// Conversion function from rol/ror expressions to C code strings
   /// Note that this constructs a complex expression to do bit
   /// twiddling since rol/ror operations are not native to ANSI-C.
@@ -173,6 +178,9 @@ protected:
 
   std::string
   convert_extractbits(const extractbits_exprt &src, unsigned precedence);
+
+  std::string
+  convert_concatenation(const concatenation_exprt &src, unsigned precedence);
 
   std::string convert_unary(
     const unary_exprt &,
