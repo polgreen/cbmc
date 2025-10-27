@@ -353,8 +353,12 @@ std::string expr2ct::convert_rec(
     }
     else
     {
-      return q + sign_str + CPROVER_PREFIX + "bitvector[" +
-             integer2string(width) + "]" + d;
+      if(is_signed)
+        return "ap_int<" + integer2string(width) + ">" + d;
+      else
+        return "ap_uint<" + integer2string(width) + ">" + d;
+      // return q + sign_str + CPROVER_PREFIX + "bitvector[" +
+      //        integer2string(width) + "]" + d;
     }
   }
   else if(src.id()==ID_struct)
@@ -842,6 +846,60 @@ std::string expr2ct::convert_trinary(
 
   return dest;
 }
+
+
+std::string expr2ct::convert_ite(
+  const ternary_exprt &src,
+  unsigned precedence)
+{
+  const exprt &op0=src.op0();
+  const exprt &op1=src.op1();
+  const exprt &op2=src.op2();
+
+  unsigned p0, p1, p2;
+
+  std::string s_op0=convert_with_precedence(op0, p0);
+  std::string s_op1=convert_with_precedence(op1, p1);
+  std::string s_op2=convert_with_precedence(op2, p2);
+
+  // get cast for both branches
+  std::string cast = " (" + convert(src.type()) + ") ";
+
+  std::string dest;
+
+  if(precedence>=p0)
+    dest+='(';
+  dest+=s_op0;
+  if(precedence>=p0)
+    dest+=')';
+
+  dest+=' ';
+  dest+="?";
+  dest +=cast;
+  dest+=' ';
+
+  if(precedence>=p1)
+    dest+='(';
+  dest+=s_op1;
+  if(precedence>=p1)
+    dest+=')';
+
+  dest+=' ';
+  dest+=":";
+  dest +=cast;
+  dest+=' ';
+
+  if(precedence>=p2)
+    dest+='(';
+  dest+=s_op2;
+  if(precedence>=p2)
+    dest+=')';
+
+  return dest;
+}
+
+
+
 
 std::string expr2ct::convert_binding(
   const binding_exprt &src,
@@ -3544,6 +3602,19 @@ expr2ct::convert_extractbits(const extractbits_exprt &src, unsigned precedence)
   return dest;
 }
 
+std::string
+expr2ct::convert_concatenation(const concatenation_exprt &src, unsigned precedence)
+{
+  std::string dest  = "(";
+  dest += convert_with_precedence(src.op0(), precedence);
+  dest+=',';
+  dest += convert_with_precedence(src.op1(), precedence);
+  dest+=')';
+
+  return dest;
+}
+
+
 std::string expr2ct::convert_sizeof(
   const exprt &src,
   unsigned &precedence)
@@ -3939,7 +4010,7 @@ std::string expr2ct::convert_with_precedence(
     return convert_binary(to_implies_expr(src), "==>", precedence = 3, true);
 
   else if(src.id()==ID_if)
-    return convert_trinary(to_if_expr(src), "?", ":", precedence = 3);
+    return convert_ite(to_if_expr(src), precedence = 3);
 
   else if(src.id()==ID_forall)
     return convert_binding(to_quantifier_expr(src), "forall", precedence = 2);
@@ -4049,6 +4120,9 @@ std::string expr2ct::convert_with_precedence(
 
   else if(src.id()==ID_extractbits)
     return convert_extractbits(to_extractbits_expr(src), precedence);
+  
+  else if(src.id()==ID_concatenation)
+    return convert_concatenation(to_concatenation_expr(src), precedence);
 
   else if(src.id()==ID_initializer_list ||
           src.id()==ID_compound_literal)
